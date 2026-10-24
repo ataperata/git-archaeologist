@@ -1,0 +1,162 @@
+{
+  "id": "acme/widget",
+  "commitMatches": [
+    {
+      "subjectIncludes": "Add session refresh guard",
+      "pulls": [40],
+      "issues": [12],
+      "discussions": [3]
+    },
+    {
+      "subjectIncludes": "Broaden the guard after review",
+      "pulls": [40],
+      "issues": [12]
+    },
+    {
+      "subjectIncludes": "Revert \"Broaden the guard",
+      "pulls": [44],
+      "issues": [15]
+    },
+    {
+      "subjectIncludes": "Restore expired-token coverage",
+      "pulls": [51],
+      "issues": [18]
+    }
+  ],
+  "pulls": {
+    "40": {
+      "number": 40,
+      "title": "Guard null session tokens",
+      "body": "The guard fails closed when a mobile client wakes without a token, which is what turned refreshSession into a 500. Fixes #12. Refines the approach from discussion #3.",
+      "state": "closed",
+      "merged": true,
+      "author": "mina",
+      "url": "https://github.com/acme/widget/pull/40"
+    },
+    "44": {
+      "number": 44,
+      "title": "Revert the expired reason string",
+      "body": "Restores the exact reason string missing-token. The status page matcher compares that string and dropped alerts when it changed. Fixes #15.",
+      "state": "closed",
+      "merged": true,
+      "author": "jonas",
+      "url": "https://github.com/acme/widget/pull/44"
+    },
+    "51": {
+      "number": 51,
+      "title": "Cover expired tokens without changing the reason",
+      "body": "Adds token.expired and an empty-value check while keeping the reason string missing-token, so the dashboard contract stays intact. Fixes #18.",
+      "state": "closed",
+      "merged": true,
+      "author": "mina",
+      "url": "https://github.com/acme/widget/pull/51"
+    }
+  },
+  "issues": {
+    "12": {
+      "number": 12,
+      "title": "Session refresh crashes when the mobile client wakes with a null token",
+      "body": "After the background-resume rollout, Android clients called refreshSession(null) and the API 500'd on token.value. The guard needs to fail closed.",
+      "state": "closed",
+      "author": "lina",
+      "url": "https://github.com/acme/widget/issues/12"
+    },
+    "15": {
+      "number": 15,
+      "title": "Dashboard alert matcher broke on reason missing-or-expired",
+      "body": "The status page matcher keys on the exact string missing-token. Changing the guard's reason dropped production alerts for 40 minutes.",
+      "state": "closed",
+      "author": "lina",
+      "url": "https://github.com/acme/widget/issues/15"
+    },
+    "18": {
+      "number": 18,
+      "title": "Expired tokens still take the refresh path",
+      "body": "Reverting the reason string was right, but expired tokens are refreshable again. Express expiry as a boolean and keep the reason string stable.",
+      "state": "closed",
+      "author": "mina",
+      "url": "https://github.com/acme/widget/issues/18"
+    }
+  },
+  "discussions": {
+    "3": {
+      "number": 3,
+      "title": "Where should the null-token guard live?",
+      "body": "The gateway could drop null tokens, but every service imports the client library. Put the guard in refreshSession so call sites cannot forget it.",
+      "author": "ada",
+      "url": "https://github.com/acme/widget/discussions/3",
+      "comments": [
+        {
+          "id": 8001,
+          "author": "sam",
+          "body": "Agree on the library, and keep the reason string stable. The dashboard matcher is an exact compare.",
+          "createdAt": "2023-12-18T15:00:00Z"
+        }
+      ]
+    }
+  },
+  "reviewComments": {
+    "40": [
+      {
+        "id": 9001,
+        "author": "ada",
+        "body": "Null is the crash we saw, but expiry is the same failure mode. Can the guard treat expired tokens as not refreshable without inventing a new reason string?",
+        "path": "lib/session.ts",
+        "line": 6,
+        "createdAt": "2024-01-20T16:04:00Z",
+        "url": "https://github.com/acme/widget/pull/40#discussion_r9001"
+      }
+    ],
+    "51": [
+      {
+        "id": 9002,
+        "author": "jonas",
+        "body": "Checked the dashboard matcher: it still keys on missing-token. This shape is safe to ship.",
+        "path": "src/auth/session.ts",
+        "line": 9,
+        "createdAt": "2024-05-02T11:12:00Z",
+        "url": "https://github.com/acme/widget/pull/51#discussion_r9002"
+      }
+    ]
+  },
+  "reviews": {
+    "40": [
+      {
+        "id": 9101,
+        "author": "ada",
+        "state": "COMMENTED",
+        "body": "The fail-closed behavior is what we want. I left a note on the line about expired tokens.",
+        "url": "https://github.com/acme/widget/pull/40#pullrequestreview-9101"
+      }
+    ]
+  },
+  "issueComments": {
+    "12": [
+      {
+        "id": 7001,
+        "author": "lina",
+        "body": "Saw this in production after the mobile resume rollout: refreshSession was invoked with null and threw on token.value.",
+        "createdAt": "2024-01-02T09:30:00Z",
+        "url": "https://github.com/acme/widget/issues/12#issuecomment-7001"
+      }
+    ],
+    "15": [
+      {
+        "id": 7002,
+        "author": "lina",
+        "body": "Alerts flatlined for 40 minutes. Please revert the reason string rather than teaching the matcher a second value.",
+        "createdAt": "2024-02-11T18:12:00Z",
+        "url": "https://github.com/acme/widget/issues/15#issuecomment-7002"
+      }
+    ],
+    "18": [
+      {
+        "id": 7003,
+        "author": "mina",
+        "body": "Boolean expiry keeps the matcher intact and still rejects stale tokens.",
+        "createdAt": "2024-04-28T13:45:00Z",
+        "url": "https://github.com/acme/widget/issues/18#issuecomment-7003"
+      }
+    ]
+  }
+}

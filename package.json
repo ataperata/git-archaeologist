@@ -1,0 +1,37 @@
+{
+  "name": "git-archaeologist",
+  "version": "0.1.0",
+  "description": "Explain why a line of code exists by excavating git history, pull requests, reviews, and issues into a decision graph.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Ata Perata <99473563+ataperata@users.noreply.github.com>",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "git-archaeologist": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "public",
+    "fixtures",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "demo": "node dist/cli.js demo",
+    "serve": "node dist/cli.js serve",
+    "start": "node dist/cli.js serve"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}
