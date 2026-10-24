@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Test (offline)
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Demo CLI
+        run: node dist/cli.js demo --json > /tmp/investigation.json
+      - name: Demo graph contains the decision edges
+        run: |
+          node --input-type=module -e "
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('/tmp/investigation.json', 'utf8'));
+          if (!report.narrative.includes('[@issue:12]')) {
+            console.error('narrative missing issue citation');
+            process.exit(1);
+          }
+          const kinds = new Set(report.graph.edges.map((edge) => edge.type));
+          for (const kind of ['introduced', 'modified', 'motivated-by', 'reverted']) {
+            if (!kinds.has(kind)) {
+              console.error('missing edge type ' + kind);
+              process.exit(1);
+            }
+          }
+          const types = new Set(report.graph.nodes.map((node) => node.type));
+          for (const type of ['commit', 'pull_request', 'issue', 'discussion', 'focus']) {
+            if (!types.has(type)) {
+              console.error('missing node type ' + type);
+              process.exit(1);
+            }
+          }
+          "

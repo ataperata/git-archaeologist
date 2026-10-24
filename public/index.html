@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>git-archaeologist</title>
+    <meta
+      name="description"
+      content="Ask why a line of code exists. git-archaeologist follows blame through renames and lays the commits, pull requests, reviews, and issues out as a decision graph."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%2314100e' width='32' height='32' rx='6'/%3E%3Cpath d='M16 5l8 4.5v9L16 23l-8-4.5v-9L16 5z' fill='none' stroke='%23e08a4f' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='14' r='2.2' fill='%23e7d7b1'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16 3.5 27 9.2v10.6L16 25.5 5 19.8V9.2L16 3.5z" />
+          <circle cx="16" cy="14.5" r="2.3" />
+        </svg>
+        <div>
+          <p class="kicker">Excavation log</p>
+          <h1>git-archaeologist</h1>
+        </div>
+      </div>
+      <p id="credential" class="credential">Checking local credentials…</p>
+    </header>
+
+    <main>
+      <aside class="panel">
+        <p class="lede">
+          Point this at a git repository and ask why a line or function exists. Blame is followed across renames.
+          Commits are tied to pull requests, reviews, and issues, then drawn as a decision graph.
+        </p>
+        <button id="demo" class="primary" type="button">Excavate the sample repository</button>
+        <form id="form">
+          <label>
+            Repository
+            <input id="repo" name="repo" placeholder="/path/to/repo or https://github.com/org/repo" autocomplete="off" />
+          </label>
+          <label>
+            File
+            <input id="file" name="file" placeholder="src/auth/session.ts" autocomplete="off" />
+          </label>
+          <div class="split">
+            <label>
+              Line
+              <input id="line" name="line" type="number" min="1" inputmode="numeric" placeholder="42" />
+            </label>
+            <label>
+              Symbol
+              <input id="symbol" name="symbol" placeholder="refreshSession" autocomplete="off" />
+            </label>
+          </div>
+          <label>
+            Question
+            <textarea id="question" name="question" rows="3" placeholder="Why does this line exist?"></textarea>
+          </label>
+          <label class="check">
+            <input id="offline" name="offline" type="checkbox" checked />
+            <span>Offline mode — fixtures, commit messages, and the heuristic narrator</span>
+          </label>
+          <button class="secondary" type="submit">Ask this repository</button>
+        </form>
+        <fieldset class="filters">
+          <legend>Show edges</legend>
+          <label><input type="checkbox" data-edge="introduced" checked /> introduced</label>
+          <label><input type="checkbox" data-edge="modified" checked /> modified</label>
+          <label><input type="checkbox" data-edge="motivated-by" checked /> motivated by</label>
+          <label><input type="checkbox" data-edge="reverted" checked /> reverted</label>
+          <label><input type="checkbox" data-edge="linked" checked /> linked</label>
+        </fieldset>
+        <ul class="legend">
+          <li><i class="swatch focus"></i> line under study</li>
+          <li><i class="swatch commit"></i> commit</li>
+          <li><i class="swatch pr"></i> pull request</li>
+          <li><i class="swatch issue"></i> issue</li>
+          <li><i class="swatch discussion"></i> review or discussion</li>
+        </ul>
+      </aside>
+
+      <section id="report" aria-live="polite">
+        <p id="status" class="status">No excavation yet.</p>
+        <p id="error" class="error" hidden></p>
+        <article id="narrative" class="narrative">
+          <p class="placeholder">
+            The sample repository is a session-refresh guard that was added, broadened, reverted, moved, and then
+            rewritten so expiry would not break a dashboard matcher. Excavate it, or bring your own file.
+          </p>
+        </article>
+        <div id="stage">
+          <div class="trench">
+            <svg id="graph" role="img" aria-label="Decision graph"></svg>
+          </div>
+          <div class="dossier">
+            <div class="dossier-bar">
+              <h2>Dossier</h2>
+              <button id="copy" type="button" disabled>Copy JSON</button>
+            </div>
+            <div id="inspector" class="inspector">
+              <p class="placeholder">Select a node, or a citation in the field report.</p>
+            </div>
+            <div id="artifacts" class="artifacts"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
