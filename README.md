@@ -172,6 +172,8 @@ GitHub responses and model completions are cached on disk for 24 hours. A second
 - `POST /api/demo` — builds the sample repository in the cache and investigates it offline.
 - `POST /api/investigate` — `{ "repo", "file", "line" | "symbol", "question", "offline" }`.
 
+Requests must carry a loopback `Host` (`127.0.0.1`, `localhost`, or `[::1]`), and POSTs must send `Content-Type: application/json` from the same origin. That keeps other web pages and DNS-rebinding tricks from driving the API.
+
 The graph is drawn in SVG with a small force layout. Drag a node, scroll to zoom, drag the background to pan, and filter edges. Citation chips in the field report select the same node as the dossier list.
 
 ## Development

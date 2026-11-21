@@ -52,8 +52,51 @@ export function startServer(options: { host: string; port: number; config: AppCo
   });
 }
 
+const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
+
+function hostnameOf(value: string): string | null {
+  try {
+    return new URL(`http://${value}`).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The API can read any repository the process can see, so only answer requests
+ * addressed to a loopback name (blocks DNS rebinding) and only accept POSTs that
+ * a cross-origin page cannot send without a CORS preflight.
+ */
+function rejectForeignRequest(req: http.IncomingMessage): string | null {
+  const host = req.headers.host;
+  const hostname = host ? hostnameOf(host) : null;
+  if (!hostname || !LOOPBACK_HOSTS.has(hostname)) return "Host must be a loopback address.";
+  if (req.method === "POST") {
+    const origin = req.headers.origin;
+    if (origin && origin !== "null") {
+      let originHost: string | null = null;
+      try {
+        originHost = new URL(origin).host.toLowerCase();
+      } catch {
+        originHost = null;
+      }
+      if (originHost !== host?.toLowerCase()) return "Cross-origin requests are not allowed.";
+    } else if (origin === "null") {
+      return "Cross-origin requests are not allowed.";
+    }
+    const type = (req.headers["content-type"] ?? "").split(";")[0]?.trim().toLowerCase();
+    if (type !== "application/json") return "POST requests must use Content-Type: application/json.";
+  }
+  return null;
+}
+
 async function handle(req: http.IncomingMessage, res: http.ServerResponse, config: AppConfig): Promise<void> {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  const refusal = rejectForeignRequest(req);
+  if (refusal) {
+    sendJson(res, 403, { error: refusal });
+    return;
+  }
   if (req.method === "GET" && url.pathname === "/api/health") {
     sendJson(res, 200, { ok: true });
     return;
