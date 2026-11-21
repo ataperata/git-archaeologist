@@ -79,10 +79,9 @@ function pythonEnd(lines: string[], startIndex: number): number {
   let end = startIndex;
   for (let i = startIndex + 1; i < lines.length; i += 1) {
     const line = lines[i] ?? "";
-    if (!line.trim()) {
-      end = i;
-      continue;
-    }
+    // Blank lines only belong to the body when more indented code follows;
+    // counting trailing ones ran past the end of the file.
+    if (!line.trim()) continue;
     if (indentOf(line) <= base) break;
     end = i;
   }

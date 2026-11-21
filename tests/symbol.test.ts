@@ -41,6 +41,20 @@ def other():
     expect(text).not.toContain("def other");
   });
 
+  it("ends a Python body at its last code line, even at the end of the file", () => {
+    const source = `def first():
+    value = 1
+
+    return value
+
+
+def last(x):
+    return x + 1
+`;
+    expect(locateSymbol(source, "first")).toMatchObject({ start: 1, end: 4 });
+    expect(locateSymbol(source, "last")).toMatchObject({ start: 7, end: 8 });
+  });
+
   it("rejects an unknown symbol", () => {
     expect(() => locateSymbol("const value = 1;\n", "missing")).toThrow(ArchaeologistError);
   });
