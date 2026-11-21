@@ -5,10 +5,15 @@ import { ArchaeologistError } from "../errors.js";
 import type { RepoIdentity } from "../types.js";
 import { git, gitOptional, GitError } from "./exec.js";
 
+const GITHUB_REMOTE =
+  /^(?:(?:https?|ssh|git):\/\/(?:[^@/]+@)?(?:www\.)?github\.com(?::\d+)?\/|git@github\.com:)([A-Za-z0-9-]+)\/([A-Za-z0-9._-]+)$/i;
+
 export function parseGitHubRemote(input: string): { owner: string; name: string } | null {
-  const trimmed = input.trim().replace(/\.git$/i, "").replace(/\/$/, "");
-  const match = trimmed.match(/github\.com[:/]([^/]+)\/([^/#?]+)$/i);
-  if (!match?.[1] || !match[2]) return null;
+  const trimmed = input.trim().replace(/\/$/, "").replace(/\.git$/i, "");
+  // The host must be github.com itself, and owner/name end up in a cache path,
+  // so only accept GitHub's own name characters and never "." or "..".
+  const match = trimmed.match(GITHUB_REMOTE);
+  if (!match?.[1] || !match[2] || match[2] === "." || match[2] === "..") return null;
   return { owner: match[1], name: match[2] };
 }
 
