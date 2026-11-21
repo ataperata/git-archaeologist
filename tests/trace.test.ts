@@ -61,6 +61,14 @@ diff --git a/lib/session.ts b/lib/session.ts
     expect(lineCommits.at(-1)?.added.join("\n")).toContain("token.expired");
   });
 
+  it("reports a missing path without leaving the rename walk unhandled", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ga-missing-"));
+    dirs.push(root);
+    const sample = await buildSampleRepository(root);
+    await expect(traceLines(sample.path, "no/such/file.ts", 1, 1)).rejects.toThrow(/Could not trace no\/such\/file\.ts:1-1/);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+
   it("builds repositories with stable commit ids", async () => {
     const left = await mkdtemp(path.join(os.tmpdir(), "ga-stable-a-"));
     const right = await mkdtemp(path.join(os.tmpdir(), "ga-stable-b-"));

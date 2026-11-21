@@ -12,6 +12,8 @@ export async function traceLines(repo: string, file: string, start: number, end:
   if (start < 1 || end < start) {
     throw new ArchaeologistError(`Invalid line range ${start}-${end}.`);
   }
+  // The rename log does not depend on the line log, so run both git walks at once.
+  const moveLog = git(["log", "--follow", "--name-status", `--format=${LOG_FORMAT}`, "--", file], repo).catch(() => "");
   let logOutput: string;
   try {
     logOutput = await git(
@@ -28,23 +30,7 @@ export async function traceLines(repo: string, file: string, start: number, end:
   }
   await attachReverts(repo, commits);
 
-  let moveOutput = "";
-  try {
-    moveOutput = await git(
-      [
-        "log",
-        "--follow",
-        "--name-status",
-        `--format=${LOG_FORMAT}`,
-        "--",
-        file,
-      ],
-      repo,
-    );
-  } catch {
-    moveOutput = "";
-  }
-  const moves = parseMoveLog(moveOutput);
+  const moves = parseMoveLog(await moveLog);
   const known = new Set(commits.map((commit) => commit.sha));
   for (const move of moves) {
     const existing = commits.find((commit) => commit.sha === move.sha);
