@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command, CommanderError } from "commander";
@@ -131,8 +132,18 @@ function parsePositiveInt(value: string, name: string): number {
   return parsed;
 }
 
-const invokedDirectly =
-  process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+// npm installs bins as symlinks, so compare real paths rather than the invoked path.
+function isEntryPoint(): boolean {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  try {
+    return realpathSync(invoked) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+const invokedDirectly = isEntryPoint();
 
 if (invokedDirectly) {
   runCli(process.argv.slice(2)).then(
