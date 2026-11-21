@@ -55,6 +55,46 @@ def last(x):
     expect(locateSymbol(source, "last")).toMatchObject({ start: 7, end: 8 });
   });
 
+  it("prefers the declaration over an earlier call site", () => {
+    const ts = `export function main() {
+  return helper(1);
+}
+
+function helper(x: number) {
+  const y = x + 1;
+  return y;
+}
+`;
+    expect(locateSymbol(ts, "helper")).toMatchObject({ start: 5, end: 8 });
+
+    const py = `def main():
+    return helper(1)
+
+def helper(x):
+    return x + 1
+`;
+    expect(locateSymbol(py, "helper")).toMatchObject({ start: 4, end: 5 });
+
+    const method = `class Cart {
+  total() {
+    return this.price();
+  }
+  price() {
+    return 1;
+  }
+}
+`;
+    expect(locateSymbol(method, "price")).toMatchObject({ start: 5, end: 7 });
+  });
+
+  it("finds generic function declarations", () => {
+    const source = `export function first<T>(items: T[]): T | undefined {
+  return items[0];
+}
+`;
+    expect(locateSymbol(source, "first")).toMatchObject({ start: 1, end: 3 });
+  });
+
   it("rejects an unknown symbol", () => {
     expect(() => locateSymbol("const value = 1;\n", "missing")).toThrow(ArchaeologistError);
   });

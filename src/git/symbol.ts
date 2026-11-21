@@ -40,21 +40,34 @@ function normalizeNewlines(source: string): string {
 
 function declarationLines(lines: string[], symbol: string): number[] {
   const name = escapeRegExp(symbol);
-  const patterns = [
-    new RegExp(`\\bfunction\\s+${name}\\s*\\(`),
-    new RegExp(`\\b(?:const|let|var)\\s+${name}\\s*=`),
-    new RegExp(`\\bdef\\s+${name}\\s*\\(`),
-    new RegExp(`\\bfunc\\s+(?:\\([^)]*\\)\\s*)?${name}\\s*\\(`),
-    new RegExp(`\\b${name}\\s*\\([^;]*\\)\\s*(?::[^{]+)?\\{`),
-    new RegExp(`\\b${name}\\s*=\\s*(?:async\\s*)?(?:\\([^)]*\\)|[A-Za-z_][\\w]*)\\s*=>`),
-    new RegExp(`\\b${name}\\s*\\(`),
+  // Ordered from most to least specific. The loose tiers also match call sites,
+  // so they are only used when nothing that looks like a declaration exists;
+  // otherwise a call above the definition would be traced instead of the body.
+  const tiers = [
+    [
+      new RegExp(`\\bfunction\\s*\\*?\\s*${name}\\s*(?:<[^>]*>)?\\s*\\(`),
+      new RegExp(`\\b(?:const|let|var)\\s+${name}\\s*(?::[^=]+)?=`),
+      new RegExp(`\\bdef\\s+${name}\\s*\\(`),
+      new RegExp(`\\bfunc\\s+(?:\\([^)]*\\)\\s*)?${name}\\s*\\(`),
+    ],
+    [
+      new RegExp(`^\\s*(?:[A-Za-z_$][\\w$]*\\s+)*\\*?${name}\\s*(?:<[^>]*>)?\\s*\\([^;]*\\)\\s*(?::[^{]+)?\\{`),
+      new RegExp(`\\b${name}\\s*=\\s*(?:async\\s*)?(?:\\([^)]*\\)|[A-Za-z_][\\w]*)\\s*=>`),
+    ],
+    [
+      new RegExp(`\\b${name}\\s*\\([^;]*\\)\\s*(?::[^{]+)?\\{`),
+      new RegExp(`\\b${name}\\s*\\(`),
+    ],
   ];
-  const found: number[] = [];
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i] ?? "";
-    if (patterns.some((pattern) => pattern.test(line))) found.push(i);
+  for (const patterns of tiers) {
+    const found: number[] = [];
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i] ?? "";
+      if (patterns.some((pattern) => pattern.test(line))) found.push(i);
+    }
+    if (found.length > 0) return found;
   }
-  return found;
+  return [];
 }
 
 function rangeEnd(lines: string[], startIndex: number): number {
